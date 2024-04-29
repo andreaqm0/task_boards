@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  db:
+    image: mariadb:latest
+    container_name: taskboards_mariadb
+    restart: always
+    volumes:
+      - data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    networks:
+      - default
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskboards_api
+    command:
+      [
+        "./wait-for-mariadb.sh",
+        "db",
+        "python3",
+        "manage.py",
+        "runserver",
+        "0.0.0.0:8000",
+      ]
+    volumes:
+      - .:/app/
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile-frontend
+    container_name: taskboards_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./app:/app
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - api
+
+volumes:
+  data:
+
+networks:
+  default:
+    driver: bridge

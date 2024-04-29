@@ -1,0 +1,10 @@
+__pycache__/
+
+**/migrations
+media
+db.*
+Procfile
+.git
+
+**/.vscode
+**/node_modules
